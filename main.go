@@ -66,6 +66,8 @@ func pinger(c chan string) {
 
 	process_done:
 		for {
+			// todo: add "nmcli connection show --active" output
+
 			select {
 			case msg, ok := <-stdout_msg_reader:
 				if !ok {
