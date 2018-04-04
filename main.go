@@ -74,38 +74,41 @@ func pinger(c chan string) {
 				if !ok {
 					break process_done
 				}
+				last_message_body = msg
+				response := last_message_body
 				if strings.Contains(msg, "Unreachable") {
-					last_message_body = msg
-					added_message := ""
 					no_response := time.Since(last_response).Seconds()
 					if no_response > 5 {
-						added_message = fmt.Sprintf(", no network for last %v seconds", int(no_response))
+						response += fmt.Sprintf(", no network for last %v seconds", int(no_response))
 					}
-					c <- fmt.Sprintf("%s%s", last_message_body, added_message)
 				} else {
 					last_response = time.Now()
-					c <- msg
 				}
+				c <- response
 				last_message = time.Now()
 			case msg, ok := <-stderr_msg_reader:
 				if !ok {
 					break process_done
 				}
 				last_message_body = fmt.Sprintf("stderr: %s", msg)
-				added_message := ""
+				response := last_message_body
 				no_response := time.Since(last_response).Seconds()
 				if no_response > 5 {
-					added_message = fmt.Sprintf(", no network for last %v seconds", int(no_response))
+					response += fmt.Sprintf(", no network for last %v seconds", int(no_response))
 				}
-				c <- fmt.Sprintf("%s%s", last_message_body, added_message)
+				c <- response
 				last_message = time.Now()
 			case <-time.After(1200 * time.Millisecond):
 				no_messages := time.Since(last_message).Seconds()
 				if no_messages > 1 {
 					no_response := time.Since(last_response).Seconds()
 					if no_response > 5 {
-						added_message := fmt.Sprintf(", no network for last %v seconds", int(no_response))
-						c <- fmt.Sprintf("%s%s", last_message_body, added_message)
+						response := last_message_body
+						if response != "" {
+							response += ", "
+						}
+						response += fmt.Sprintf("no network for last %v seconds", int(no_response))
+						c <- response
 					}
 				}
 			}
